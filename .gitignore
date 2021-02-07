@@ -1,5 +1,6 @@
 # folders
 doc/
+/test/test_build/
 
 # output files
 *.out

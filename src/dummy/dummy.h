@@ -26,3 +26,5 @@ void game_referee_intervention(game_time_t time_p1, moves_cnt_t moves_p1, game_t
 void player_second_elapsed(enum player_id player);
 /*how to count seconds on hardware timers*/
 /*how the interface will need info if the player made a move*/
+
+game_time_t player_get_time_left(enum player_id player);
