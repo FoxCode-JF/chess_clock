@@ -20,6 +20,7 @@ void game_move_done(void);
 
 void game_start(void);
 void game_pause(void);
+bool game_is_started();
 
 void game_referee_intervention(game_time_t time_p1, moves_cnt_t moves_p1, game_time_t time_p2, moves_cnt_t moves_p2);
 

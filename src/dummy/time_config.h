@@ -14,7 +14,7 @@ struct extra_time_after_x_moves
 struct time_config
 {
 	game_time_t base_time;
-	game_time_t bonus_time_after_move;
+	game_time_t bonus_per_move;
 
 	struct extra_time_after_x_moves extra_time;
 };
