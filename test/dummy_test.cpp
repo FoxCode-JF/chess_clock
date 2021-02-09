@@ -60,7 +60,10 @@ SCENARIO("Game initialization")
 			}
 		}
 	}
+}
 
+SCENARIO("Game starting")
+{
 	WHEN("Game is initialized")
 	{
 		struct time_config config;
@@ -69,6 +72,95 @@ SCENARIO("Game initialization")
 		THEN("Game is not started")
 		{
 			REQUIRE(false == game_is_started());
+		}
+
+		WHEN("Game started")
+		{
+			game_start();
+
+			THEN("Game is started")
+			{
+				REQUIRE(true == game_is_started());
+			}
+
+			WHEN("Game is paused")
+			{
+				game_pause();
+
+				THEN("Game is not started")
+				{
+					REQUIRE(false == game_is_started());
+				}
+				WHEN("Game started again")
+				{
+					game_start();
+
+					THEN("Game is started")
+					{
+						REQUIRE(true == game_is_started());
+					}	
+				}
+			}
+		}
+	}
+}
+
+SCENARIO("Switching player turn")
+{
+	WHEN("Game is not started")
+	{
+		struct time_config config;
+
+		game_init(&config);
+
+		THEN("No player to move")
+		{
+			REQUIRE(PLAYER_NONE == get_current_player());
+		}
+
+		WHEN("Game started")
+		{
+			game_start();
+
+			THEN("Player one turn")
+			{
+				REQUIRE(PLAYER_ONE == get_current_player());
+			}
+
+			WHEN("Player one moved")
+			{
+				game_current_player_moved();
+
+				THEN("Player two turn")
+				{
+					REQUIRE(PLAYER_TWO == get_current_player());		
+				}
+
+				WHEN("Player two moved")
+				{
+					game_current_player_moved();
+				
+					THEN("Player one turn")
+					{
+						REQUIRE(PLAYER_ONE == get_current_player());		
+					}
+				}
+
+				WHEN("Game paused")
+				{
+					game_pause();
+
+					WHEN("Game is resumed")
+					{
+						game_start();
+
+						THEN("Player two turn")
+						{
+							REQUIRE(PLAYER_TWO == get_current_player());
+						}
+					}
+				}
+			}
 		}
 	}
 }

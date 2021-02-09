@@ -16,7 +16,7 @@ struct time_config;
 
 void game_init(struct time_config *time);
 
-void game_move_done(void);
+void game_current_player_moved(void);
 
 void game_start(void);
 void game_pause(void);
@@ -29,3 +29,5 @@ void player_second_elapsed(enum player_id player);
 /*how the interface will need info if the player made a move*/
 
 game_time_t player_get_time_left(enum player_id player);
+
+enum player_id get_current_player(void);
