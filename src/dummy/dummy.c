@@ -23,7 +23,8 @@ enum game_state
 
 struct game
 {
-	struct player player1;
+	struct player player_one;
+	struct player player_two;
 
 	enum game_state state;
 	enum player_id  current_player;
@@ -37,7 +38,8 @@ static struct game game_state;
 void game_init(struct time_config *time)
 {
 	game_state.state = GAME_STATE_PAUSED;
-	game_state.player1.time_left = time->base_time;
+	game_state.player_one.time_left = time->base_time;
+	game_state.player_two.time_left = time->base_time;
 	game_state.current_player = PLAYER_NONE;
 }
 
@@ -53,6 +55,8 @@ void game_current_player_moved(void)
 			break;
 		case PLAYER_TWO:
 			game_state.current_player = PLAYER_ONE;
+			break;
+		default:
 			break;
 	}
 }
@@ -82,16 +86,44 @@ void game_referee_intervention(game_time_t time_p1, moves_cnt_t moves_p1, game_t
 
 }
 
-void player_second_elapsed(enum player_id player)
+void current_player_second_elapsed(void)
 {
-
+	if (true == game_is_started())
+	{
+		switch (game_state.current_player) 
+		{
+			case PLAYER_NONE:
+				// game_state.current_player = PLAYER_ONE;
+				break;
+			case PLAYER_ONE:
+				game_state.player_one.time_left--;
+				break;
+			case PLAYER_TWO:
+				game_state.player_two.time_left--;
+				break;
+			default:
+				break;
+		}
+	}
 }
 /*how to count seconds on hardware timers*/
 /*how the interface will need info if the player made a move*/
 
 game_time_t player_get_time_left(enum player_id player)
 {
-	return game_state.player1.time_left;	
+	switch (player) 
+	{
+		case PLAYER_NONE:
+			// illegal case
+			break;
+		case PLAYER_ONE:
+			return game_state.player_one.time_left;
+		case PLAYER_TWO:
+			return game_state.player_two.time_left;	
+		default:
+			// illegal case
+			return -1;
+	}
 }
 
 enum player_id get_current_player(void)

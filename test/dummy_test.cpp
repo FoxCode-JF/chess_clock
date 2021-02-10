@@ -164,3 +164,115 @@ SCENARIO("Switching player turn")
 		}
 	}
 }
+
+
+SCENARIO("Second elapsed")
+{
+	GIVEN("After init - game not started")
+	{
+		game_time_t time_expected = MIN_TO_SEC(5);
+		struct time_config config;
+
+		config.base_time = time_expected;
+		game_init(&config);
+
+		WHEN("Current player's second elapsed")
+		{
+			current_player_second_elapsed();
+
+			THEN("Player one's time not decreased")
+			{
+				game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
+
+				REQUIRE(time_expected == p1_time_left);
+			}
+
+			THEN("Player two's time not decreased")
+			{
+				game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
+
+				REQUIRE(time_expected == p2_time_left);		
+			}
+		}
+
+		WHEN("Game started")
+		{
+			game_start();
+
+			WHEN("Current player's second elapsed")
+			{
+				current_player_second_elapsed();
+
+				THEN("Player one's time decreased")
+				{
+					game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
+
+					REQUIRE(time_expected - 1 == p1_time_left);	
+				}
+
+
+				THEN("Player two's time not decreased")
+				{
+					game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
+
+					REQUIRE(time_expected == p2_time_left);		
+				}
+			}
+
+			WHEN("Game paused")
+			{
+				game_pause();
+				WHEN("Current player's second elapsed")
+				{
+					current_player_second_elapsed();
+					
+					THEN("Player one's time not decreased")
+					{
+						game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
+
+						REQUIRE(time_expected == p1_time_left);
+					}
+
+					// THEN("Player two's time not decreased")
+					// {
+					// 	game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
+
+					// 	REQUIRE(time_expected == p2_time_left);		
+					// }
+				}
+			}
+			WHEN("Player moved")
+			{
+				game_current_player_moved();
+
+				WHEN("Current player's second elapsed")
+				{
+					current_player_second_elapsed();
+
+					THEN("Player one's time not decreased")
+					{
+						game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
+
+						REQUIRE(time_expected == p1_time_left);	
+					}
+
+
+					THEN("Player two's time decreased")
+					{
+						game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
+
+						REQUIRE(time_expected - 1 == p2_time_left);		
+					}
+				}
+			}
+		}
+	}
+	// when game is not started then player time is not decreased
+	// given game is started
+		// when player one is currently moving:
+			// then player one time is decreased
+			//  then player two time is not decreased
+	 	// when player two is currently moving:
+			// then player one time is not decreased
+			// then player two time is decreased
+}
