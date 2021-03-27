@@ -10,18 +10,28 @@ extern "C"
 #define SEC_PER_MIN			60
 #define MIN_TO_SEC(min)		((min) * SEC_PER_MIN)
 
+static const game_time_t DEFAULT_BASE_TIME = MIN_TO_SEC(5);
+
+static void init_game_with_time_config(game_time_t base_time)
+{
+	struct time_config config;
+	config.base_time = base_time;
+	game_init(&config);
+}
+
+static void init_game_with_defaults()
+{
+	init_game_with_time_config(DEFAULT_BASE_TIME);
+}
 SCENARIO("Game initialization")
 {
 	GIVEN("Time configured to 5 minutes")
 	{
-		game_time_t time_expected = MIN_TO_SEC(5);
-		struct time_config config;
-
-		config.base_time = time_expected;
+		const game_time_t time_expected = MIN_TO_SEC(5);
 			
 		WHEN("Game is initialized")
 		{
-			game_init(&config);
+			init_game_with_time_config(time_expected);
 
 			THEN("Player one with 5 minutes left")
 			{
@@ -40,13 +50,10 @@ SCENARIO("Game initialization")
 	GIVEN("Time configured to 15 minutes")
 	{
 		game_time_t time_expected = MIN_TO_SEC(15);
-		struct time_config config;
-
-		config.base_time = time_expected;
 			
 		WHEN("Game is initialized")
 		{
-			game_init(&config);
+			init_game_with_time_config(time_expected);
 
 			THEN("Player one with 15 minutes left")
 			{
@@ -66,8 +73,7 @@ SCENARIO("Game starting")
 {
 	WHEN("Game is initialized")
 	{
-		struct time_config config;
-		game_init(&config);
+		init_game_with_defaults();
 
 		THEN("Game is not started")
 		{
@@ -109,9 +115,7 @@ SCENARIO("Switching player turn")
 {
 	WHEN("Game is not started")
 	{
-		struct time_config config;
-
-		game_init(&config);
+		init_game_with_defaults();
 
 		THEN("No player to move")
 		{
@@ -170,11 +174,9 @@ SCENARIO("Second elapsed")
 {
 	GIVEN("After init - game not started")
 	{
-		game_time_t time_expected = MIN_TO_SEC(5);
-		struct time_config config;
+		const game_time_t time_expected = MIN_TO_SEC(5);
 
-		config.base_time = time_expected;
-		game_init(&config);
+		init_game_with_time_config(time_expected);
 
 		WHEN("Current player's second elapsed")
 		{
@@ -184,14 +186,14 @@ SCENARIO("Second elapsed")
 			{
 				game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
 
-				REQUIRE(time_expected == p1_time_left);
+				REQUIRE(DEFAULT_BASE_TIME == p1_time_left);
 			}
 
 			THEN("Player two's time not decreased")
 			{
 				game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
 
-				REQUIRE(time_expected == p2_time_left);		
+				REQUIRE(DEFAULT_BASE_TIME == p2_time_left);		
 			}
 		}
 
@@ -201,13 +203,15 @@ SCENARIO("Second elapsed")
 
 			WHEN("Current player's second elapsed")
 			{
+				
 				current_player_second_elapsed();
 
 				THEN("Player one's time decreased")
 				{
+					const game_time_t time_expected = DEFAULT_BASE_TIME - 1;
 					game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
 
-					REQUIRE(time_expected - 1 == p1_time_left);	
+					REQUIRE(time_expected == p1_time_left);	
 				}
 
 
@@ -215,7 +219,7 @@ SCENARIO("Second elapsed")
 				{
 					game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
 
-					REQUIRE(time_expected == p2_time_left);		
+					REQUIRE(DEFAULT_BASE_TIME == p2_time_left);		
 				}
 			}
 
@@ -230,15 +234,8 @@ SCENARIO("Second elapsed")
 					{
 						game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
 
-						REQUIRE(time_expected == p1_time_left);
+						REQUIRE(DEFAULT_BASE_TIME == p1_time_left);
 					}
-
-					// THEN("Player two's time not decreased")
-					// {
-					// 	game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
-
-					// 	REQUIRE(time_expected == p2_time_left);		
-					// }
 				}
 			}
 			WHEN("Player moved")
@@ -251,28 +248,103 @@ SCENARIO("Second elapsed")
 
 					THEN("Player one's time not decreased")
 					{
+						const game_time_t time_expected = DEFAULT_BASE_TIME;
 						game_time_t p1_time_left = player_get_time_left(PLAYER_ONE);
 
-						REQUIRE(time_expected == p1_time_left);	
+						REQUIRE(DEFAULT_BASE_TIME == p1_time_left);	
 					}
 
 
 					THEN("Player two's time decreased")
 					{
+						const game_time_t time_expected = DEFAULT_BASE_TIME - 1;
 						game_time_t p2_time_left = player_get_time_left(PLAYER_TWO);
 
-						REQUIRE(time_expected - 1 == p2_time_left);		
+						REQUIRE(time_expected == p2_time_left);		
 					}
 				}
 			}
 		}
 	}
-	// when game is not started then player time is not decreased
-	// given game is started
-		// when player one is currently moving:
-			// then player one time is decreased
-			//  then player two time is not decreased
-	 	// when player two is currently moving:
-			// then player one time is not decreased
-			// then player two time is decreased
+}
+
+SCENARIO("Time ended")
+{
+	GIVEN("Player one has one second left")
+	{
+		struct time_config config;
+		config.base_time = 1;
+		game_init(&config);
+
+		WHEN("Game started")
+		{
+			game_start();
+
+			THEN("Time did not end for any player")
+			{
+				REQUIRE(PLAYER_NONE == game_get_player_who_exceeded_time_first());
+			}
+
+			WHEN("A second elapsed for Player one")
+			{
+				current_player_second_elapsed();
+
+				THEN("Time ended for player one")
+				{
+					REQUIRE(PLAYER_ONE == game_get_player_who_exceeded_time_first());
+				}
+
+				WHEN("Player one moved")
+				{
+					game_current_player_moved();
+
+					THEN("Time ended for player one")
+					{
+						REQUIRE(PLAYER_ONE == game_get_player_who_exceeded_time_first());
+					}
+
+					WHEN("A second elapsed for player two")
+					{
+						current_player_second_elapsed();
+
+						THEN("Time ended for player one")
+						{
+							REQUIRE(PLAYER_ONE == game_get_player_who_exceeded_time_first());
+						}
+					}
+				}
+			}
+
+			WHEN("A second elapsed for Player two")
+			{
+				game_current_player_moved();
+				current_player_second_elapsed();
+
+				THEN("Time ended for player two")
+				{
+					REQUIRE(PLAYER_TWO == game_get_player_who_exceeded_time_first());
+				}
+
+				WHEN("Player two moved")
+				{
+					game_current_player_moved();
+
+					THEN("Time ended for player two")
+					{
+						REQUIRE(PLAYER_TWO == game_get_player_who_exceeded_time_first());
+					}
+
+					WHEN("A second elapsed for player one")
+					{
+						current_player_second_elapsed();
+
+						THEN("Time ended for player two")
+						{
+							REQUIRE(PLAYER_TWO == game_get_player_who_exceeded_time_first());
+						}
+					}
+				}
+			}
+		}
+	}
 }
